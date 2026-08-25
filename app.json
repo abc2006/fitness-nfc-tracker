@@ -5,9 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NFCReaderUsageDescription": "Diese App nutzt NFC, um Fitnessgeräte anhand ihrer Tags zu erkennen."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,6 +23,19 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "react-native-nfc-manager",
+        {
+          "nfcPermission": "Diese App nutzt NFC, um Fitnessgeräte anhand ihrer Tags zu erkennen.",
+          "selectIdentifiers": [],
+          "systemCodes": []
+        }
+      ],
+      "expo-sqlite",
+      "expo-audio",
+      "expo-asset"
+    ]
   }
 }
