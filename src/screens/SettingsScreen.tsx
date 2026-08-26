@@ -197,7 +197,7 @@ export default function SettingsScreen({ navigation }: Props) {
     },
     container: {
       padding: 20,
-      paddingBottom: 60,
+      paddingBottom: 300,
     },
     field: {
       marginBottom: 20,
