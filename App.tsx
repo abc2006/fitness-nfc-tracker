@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { AutoCompleteWatcher } from './src/components/AutoCompleteWatcher';
@@ -50,12 +51,14 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <WorkoutSessionProvider>
-          <AutoCompleteWatcher />
-          <ThemedRoot />
-        </WorkoutSessionProvider>
-      </ThemeProvider>
+      <KeyboardProvider>
+        <ThemeProvider>
+          <WorkoutSessionProvider>
+            <AutoCompleteWatcher />
+            <ThemedRoot />
+          </WorkoutSessionProvider>
+        </ThemeProvider>
+      </KeyboardProvider>
     </SafeAreaProvider>
   );
 }

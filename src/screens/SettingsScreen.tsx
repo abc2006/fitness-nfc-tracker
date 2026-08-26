@@ -3,17 +3,8 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { exportAppDataJson, getTrainingDefaults, getUserProfile, importAppDataJson, saveTrainingDefaults, saveUserProfile } from '../db/database';
 import { ThemeMode, useTheme } from '../theme/ThemeContext';
 import { Gender, RootStackParamList } from '../types';
@@ -197,7 +188,7 @@ export default function SettingsScreen({ navigation }: Props) {
     },
     container: {
       padding: 20,
-      paddingBottom: 300,
+      paddingBottom: 60,
     },
     field: {
       marginBottom: 20,
@@ -291,8 +282,12 @@ export default function SettingsScreen({ navigation }: Props) {
   });
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <KeyboardAwareScrollView
+      style={styles.flex}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+      bottomOffset={20}
+    >
         <View style={styles.field}>
           <Text style={styles.label}>Darstellung</Text>
           <View style={styles.optionRow}>
@@ -438,7 +433,6 @@ export default function SettingsScreen({ navigation }: Props) {
         >
           <Text style={styles.saveButtonText}>{saving ? 'Speichert...' : 'Speichern'}</Text>
         </Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
