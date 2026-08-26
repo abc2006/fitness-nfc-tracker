@@ -23,39 +23,13 @@ class RestTimerForegroundService : Service() {
     const val NOTIFICATION_ID = 4242
     const val TAG = "RestTimerService"
     const val EXTRA_DURATION_MS = "durationMs"
-
-    @Volatile
-    var hasEnteredOnStartCommand: Boolean = false
-
-    @Volatile
-    var channelCreated: Boolean = false
-
-    @Volatile
-    var notificationBuilt: Boolean = false
-
-    @Volatile
-    var usedFallbackIcon: Boolean = false
-
-    @Volatile
-    var isForegroundActive: Boolean = false
-
-    @Volatile
-    var lastError: String? = null
   }
 
   private var countDownTimer: CountDownTimer? = null
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-    hasEnteredOnStartCommand = true
-    channelCreated = false
-    notificationBuilt = false
-    usedFallbackIcon = false
-    isForegroundActive = false
-    lastError = null
-
     try {
       createNotificationChannelIfNeeded()
-      channelCreated = true
 
       val launchIntent = packageManager.getLaunchIntentForPackage(packageName) ?: Intent()
       val pendingIntent = PendingIntent.getActivity(
@@ -66,15 +40,11 @@ class RestTimerForegroundService : Service() {
       )
 
       val notification = buildNotification(pendingIntent, "Pause läuft...")
-      notificationBuilt = true
-
       startForeground(NOTIFICATION_ID, notification)
-      isForegroundActive = true
 
       val durationMs = intent?.getLongExtra(EXTRA_DURATION_MS, 0L) ?: 0L
       startCountdown(durationMs, pendingIntent)
     } catch (error: Throwable) {
-      lastError = "${error.javaClass.name}: ${error.message}"
       Log.e(TAG, "Failed to start foreground service", error)
       stopSelf()
     }
@@ -143,7 +113,6 @@ class RestTimerForegroundService : Service() {
     return try {
       builder.setSmallIcon(R.mipmap.ic_launcher_monochrome).build()
     } catch (error: Throwable) {
-      usedFallbackIcon = true
       Log.w(TAG, "Monochrome icon failed, falling back to system icon", error)
       builder.setSmallIcon(android.R.drawable.ic_popup_reminder).build()
     }
@@ -166,7 +135,6 @@ class RestTimerForegroundService : Service() {
   override fun onDestroy() {
     super.onDestroy()
     countDownTimer?.cancel()
-    isForegroundActive = false
   }
 
   override fun onBind(intent: Intent?): IBinder? = null

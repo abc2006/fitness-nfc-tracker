@@ -1,5 +1,5 @@
 import * as Notifications from 'expo-notifications';
-import { Linking, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { getSetting, getUserProfile, saveSetting } from '../db/database';
 import { caloriesForDuration } from './stats';
 
@@ -31,22 +31,8 @@ async function ensureAndroidChannel(): Promise<void> {
     // Route through the alarm stream so the reminder is audible even with the
     // ringer on silent/vibrate — the same reason an alarm clock still rings then.
     audioAttributes: { usage: Notifications.AndroidAudioUsage.ALARM },
-    // Only takes effect once the user grants "Do Not Disturb access" for the app
-    // (see requestDndAccess below); harmless no-op otherwise.
-    bypassDnd: true,
   });
   androidChannelReady = true;
-}
-
-/**
- * Opens Android's "Do Not Disturb access" settings screen. Granting this for the
- * app is the only way a channel's `bypassDnd` actually takes effect — without it,
- * a phone in silent/DND still suppresses the reminder's sound and vibration no
- * matter how the channel is configured.
- */
-export async function requestDndAccess(): Promise<void> {
-  if (Platform.OS !== 'android') return;
-  await Linking.sendIntent('android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS');
 }
 
 export async function ensureNotificationPermission(): Promise<boolean> {

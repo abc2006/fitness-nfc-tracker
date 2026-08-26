@@ -1,7 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
 import {
@@ -20,16 +19,6 @@ import { ThemeMode, useTheme } from '../theme/ThemeContext';
 import { Gender, RootStackParamList } from '../types';
 import { isoDateToDisplay, parseBirthDateInput } from '../utils/date';
 import { showErrorAlert } from '../utils/errorAlert';
-import { vibrateMedia } from '../utils/mediaVibration';
-import { requestDndAccess } from '../utils/notifications';
-import {
-  getRestTimerServiceDiagnostics,
-  getRestTimerTickInfo,
-  isRestTimerServiceLinked,
-  resetRestTimerTickInfo,
-  startRestTimerService,
-  stopRestTimerService,
-} from '../utils/restTimerService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
@@ -82,98 +71,6 @@ export default function SettingsScreen({ navigation }: Props) {
   };
 
   useEffect(loadSettings, []);
-
-  const handleRequestDndAccess = () => {
-    Alert.alert(
-      'Nicht-stören-Zugriff',
-      'Gleich öffnet sich eine Liste. Suche darin „Trainingsbegleiter" und aktiviere den Zugriff. Danach die App bitte neu starten.',
-      [
-        {
-          text: 'Weiter',
-          onPress: async () => {
-            try {
-              await requestDndAccess();
-            } catch (error) {
-              showErrorAlert('Fehler beim Öffnen der Einstellungen', String(error));
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleShowTickInfo = async () => {
-    const info = await getRestTimerTickInfo();
-    if (!info || info.tickCount === 0) {
-      showErrorAlert(
-        'Keine Tick-Daten',
-        'Es wurden noch keine Ticks aufgezeichnet. Starte eine echte Pause, drücke Home, warte 20-30 Sekunden, komm zurück und prüfe dann erneut.'
-      );
-      return;
-    }
-    const ageSeconds = Math.round((info.nowMillis - info.lastTickAtMillis) / 1000);
-    showErrorAlert(
-      'Timer-Tick-Diagnose',
-      [
-        `Letzter Tick: vor ${ageSeconds} Sekunden`,
-        `Sekunden verbleibend beim letzten Tick: ${info.lastTickSecondsLeft}`,
-        `Anzahl Ticks insgesamt: ${info.tickCount}`,
-      ].join('\n')
-    );
-  };
-
-  const handleResetTickInfo = () => {
-    resetRestTimerTickInfo();
-    Alert.alert('Zurückgesetzt', 'Tick-Zähler wurde auf 0 gesetzt.');
-  };
-
-  const handleTestForegroundService = async () => {
-    if (!isRestTimerServiceLinked()) {
-      showErrorAlert(
-        'Modul nicht verlinkt',
-        'NativeModules.RestTimerService ist nicht vorhanden. Das native Modul wurde nicht korrekt eingebunden.'
-      );
-      return;
-    }
-    let startError: string | null = null;
-    try {
-      await startRestTimerService(5);
-    } catch (error) {
-      startError = String(error);
-    }
-
-    // Give the service a brief moment to run onStartCommand before reading back
-    // what actually happened inside it.
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const diagnostics = await getRestTimerServiceDiagnostics();
-    stopRestTimerService();
-
-    const lines = [
-      `start() Fehler: ${startError ?? '–'}`,
-      `Gerät: ${diagnostics?.manufacturer ?? '?'} ${diagnostics?.model ?? '?'} (SDK ${diagnostics?.sdkInt ?? '?'})`,
-      `onStartCommand erreicht: ${diagnostics?.hasEnteredOnStartCommand ?? '?'}`,
-      `Kanal erstellt: ${diagnostics?.channelCreated ?? '?'}`,
-      `Notification gebaut: ${diagnostics?.notificationBuilt ?? '?'}`,
-      `Fallback-Icon genutzt: ${diagnostics?.usedFallbackIcon ?? '?'}`,
-      `Foreground aktiv: ${diagnostics?.isForegroundActive ?? '?'}`,
-      `Interner Fehler: ${diagnostics?.lastError ?? '–'}`,
-    ];
-
-    showErrorAlert('Diagnose Foreground-Service', lines.join('\n'));
-  };
-
-  const handleTestVibration = () => {
-    try {
-      vibrateMedia(2000);
-    } catch (error) {
-      showErrorAlert('Fehler bei Vibration', String(error));
-      return;
-    }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch((error) => {
-      showErrorAlert('Fehler bei Haptik', String(error));
-    });
-    Alert.alert('Test ausgeführt', 'Vibration über die Medien-Kategorie wurde ausgelöst. Hast du etwas gespürt?');
-  };
 
   const exportToFileSystem = async (json: string) => {
     const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
@@ -412,56 +309,6 @@ export default function SettingsScreen({ navigation }: Props) {
             ))}
           </View>
         </View>
-
-        <View style={styles.field}>
-          <Pressable
-            style={({ pressed }) => [styles.testButton, pressed && styles.testButtonPressed]}
-            onPress={handleTestVibration}
-          >
-            <Text style={styles.testButtonText}>Vibration & Haptik testen</Text>
-          </Pressable>
-        </View>
-
-        {Platform.OS === 'android' && (
-          <View style={styles.field}>
-            <Pressable
-              style={({ pressed }) => [styles.testButton, pressed && styles.testButtonPressed]}
-              onPress={handleTestForegroundService}
-            >
-              <Text style={styles.testButtonText}>Foreground-Service testen</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {Platform.OS === 'android' && (
-          <View style={styles.field}>
-            <View style={styles.row}>
-              <Pressable
-                style={({ pressed }) => [styles.testButton, styles.flexField, pressed && styles.testButtonPressed]}
-                onPress={handleShowTickInfo}
-              >
-                <Text style={styles.testButtonText}>Letzten Timer-Tick anzeigen</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [styles.testButton, styles.flexField, pressed && styles.testButtonPressed]}
-                onPress={handleResetTickInfo}
-              >
-                <Text style={styles.testButtonText}>Zähler zurücksetzen</Text>
-              </Pressable>
-            </View>
-          </View>
-        )}
-
-        {Platform.OS === 'android' && (
-          <View style={styles.field}>
-            <Pressable
-              style={({ pressed }) => [styles.testButton, pressed && styles.testButtonPressed]}
-              onPress={handleRequestDndAccess}
-            >
-              <Text style={styles.testButtonText}>Nicht-stören-Zugriff aktivieren</Text>
-            </Pressable>
-          </View>
-        )}
 
         <View style={styles.field}>
           <Text style={styles.label}>Konfiguration & Verlauf</Text>

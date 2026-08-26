@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { cancelRestEndNotification, scheduleRestEndNotification } from '../utils/notifications';
-import { recordTimerTick, startRestTimerService, stopRestTimerService } from '../utils/restTimerService';
+import { startRestTimerService, stopRestTimerService } from '../utils/restTimerService';
 
 interface Props {
   durationSeconds: number;
@@ -29,7 +29,6 @@ export function RestTimer({ durationSeconds, onComplete, compact, onSkip }: Prop
     const tick = () => {
       const remaining = Math.max(0, Math.ceil((endAtRef.current - Date.now()) / 1000));
       setSecondsLeft(remaining);
-      recordTimerTick(remaining);
     };
 
     // Recompute from the wall clock rather than only decrementing, since Android
