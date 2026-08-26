@@ -271,7 +271,7 @@ export default function SettingsScreen({ navigation }: Props) {
       fontWeight: '700',
       fontSize: 17,
     },
-    testButton: {
+    secondaryActionButton: {
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
@@ -279,11 +279,11 @@ export default function SettingsScreen({ navigation }: Props) {
       paddingVertical: 14,
       alignItems: 'center',
     },
-    testButtonPressed: {
+    secondaryActionButtonPressed: {
       backgroundColor: colors.surfaceAlt,
       opacity: 0.7,
     },
-    testButtonText: {
+    secondaryActionButtonText: {
       color: colors.textSecondary,
       fontWeight: '600',
       fontSize: 14,
@@ -314,16 +314,16 @@ export default function SettingsScreen({ navigation }: Props) {
           <Text style={styles.label}>Konfiguration & Verlauf</Text>
           <View style={styles.row}>
             <Pressable
-              style={({ pressed }) => [styles.testButton, styles.flexField, pressed && styles.testButtonPressed]}
+              style={({ pressed }) => [styles.secondaryActionButton, styles.flexField, pressed && styles.secondaryActionButtonPressed]}
               onPress={handleImport}
             >
-              <Text style={styles.testButtonText}>Import</Text>
+              <Text style={styles.secondaryActionButtonText}>Import</Text>
             </Pressable>
             <Pressable
-              style={({ pressed }) => [styles.testButton, styles.flexField, pressed && styles.testButtonPressed]}
+              style={({ pressed }) => [styles.secondaryActionButton, styles.flexField, pressed && styles.secondaryActionButtonPressed]}
               onPress={handleExport}
             >
-              <Text style={styles.testButtonText}>Export</Text>
+              <Text style={styles.secondaryActionButtonText}>Export</Text>
             </Pressable>
           </View>
         </View>
