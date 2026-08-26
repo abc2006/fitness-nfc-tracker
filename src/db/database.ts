@@ -317,8 +317,8 @@ export async function importAppDataJson(json: string): Promise<ImportSummary> {
       firstName: typeof p.firstName === 'string' ? p.firstName : '',
       lastName: typeof p.lastName === 'string' ? p.lastName : '',
       gender: p.gender === 'male' || p.gender === 'female' || p.gender === 'other' ? p.gender : null,
-      weightKg: Number.isFinite(weightKg) ? weightKg : null,
-      heightCm: Number.isFinite(heightCm) ? heightCm : null,
+      weightKg: p.weightKg != null && Number.isFinite(weightKg) ? weightKg : null,
+      heightCm: p.heightCm != null && Number.isFinite(heightCm) ? heightCm : null,
       birthDate: typeof p.birthDate === 'string' ? p.birthDate : null,
     });
     profileImported = true;
@@ -330,8 +330,8 @@ export async function importAppDataJson(json: string): Promise<ImportSummary> {
     const defaultReps = Number(d.defaultReps);
     const defaultRestSeconds = Number(d.defaultRestSeconds);
     await saveTrainingDefaults({
-      defaultReps: Number.isFinite(defaultReps) ? defaultReps : null,
-      defaultRestSeconds: Number.isFinite(defaultRestSeconds) ? defaultRestSeconds : null,
+      defaultReps: d.defaultReps != null && Number.isFinite(defaultReps) ? defaultReps : null,
+      defaultRestSeconds: d.defaultRestSeconds != null && Number.isFinite(defaultRestSeconds) ? defaultRestSeconds : null,
     });
   }
 
