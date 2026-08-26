@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 
 interface Props {
   restTimeSeconds: string;
@@ -8,6 +8,38 @@ interface Props {
 }
 
 export function EditableRestRow({ restTimeSeconds, onChange }: Props) {
+  const { colors } = useTheme();
+
+  const styles = StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 14,
+      marginLeft: 42,
+    },
+    line: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.border,
+    },
+    icon: {
+      fontSize: 14,
+    },
+    input: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      color: colors.textSecondary,
+      fontSize: 14,
+      minWidth: 130,
+      textAlign: 'center',
+    },
+  });
+
   return (
     <View style={styles.row}>
       <View style={styles.line} />
@@ -19,38 +51,9 @@ export function EditableRestRow({ restTimeSeconds, onChange }: Props) {
         onChangeText={onChange}
         placeholder="Pause (Sek.)"
         placeholderTextColor={colors.textMuted}
+        selectTextOnFocus
       />
       <View style={styles.line} />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 14,
-    marginLeft: 42,
-  },
-  line: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  icon: {
-    fontSize: 14,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    color: colors.textPrimary,
-    fontSize: 14,
-    minWidth: 130,
-    textAlign: 'center',
-  },
-});

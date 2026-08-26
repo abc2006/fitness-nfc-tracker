@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 import { NfcStatus } from '../hooks/useNfc';
 
 const STATUS_TEXT: Record<NfcStatus, string> = {
@@ -16,6 +16,7 @@ interface Props {
 }
 
 export function NfcStatusBadge({ status }: Props) {
+  const { colors } = useTheme();
   const pulse = useRef(new Animated.Value(1)).current;
   const isActive = status === 'scanning';
 
@@ -36,6 +37,34 @@ export function NfcStatusBadge({ status }: Props) {
 
   const isProblem = status === 'disabled' || status === 'unsupported';
 
+  const styles = StyleSheet.create({
+    container: {
+      alignItems: 'center',
+      paddingVertical: 32,
+      gap: 16,
+    },
+    iconCircle: {
+      width: 96,
+      height: 96,
+      borderRadius: 48,
+      backgroundColor: colors.primaryMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    iconCircleWarning: {
+      backgroundColor: '#4A2626',
+    },
+    icon: {
+      fontSize: 40,
+    },
+    statusText: {
+      color: colors.textSecondary,
+      fontSize: 15,
+      textAlign: 'center',
+      paddingHorizontal: 24,
+    },
+  });
+
   return (
     <View style={styles.container}>
       <Animated.View
@@ -51,31 +80,3 @@ export function NfcStatusBadge({ status }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    paddingVertical: 32,
-    gap: 16,
-  },
-  iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: colors.primaryMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconCircleWarning: {
-    backgroundColor: '#4A2626',
-  },
-  icon: {
-    fontSize: 40,
-  },
-  statusText: {
-    color: colors.textSecondary,
-    fontSize: 15,
-    textAlign: 'center',
-    paddingHorizontal: 24,
-  },
-});

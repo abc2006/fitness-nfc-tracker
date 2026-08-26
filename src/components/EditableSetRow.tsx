@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors } from '../theme/colors';
+import { useTheme } from '../theme/ThemeContext';
 
 interface Props {
   setNumber: number;
@@ -10,6 +10,8 @@ interface Props {
   onChangeReps: (value: string) => void;
   showAddButton: boolean;
   onAdd: () => void;
+  showRemoveButton: boolean;
+  onRemove: () => void;
 }
 
 export function EditableSetRow({
@@ -20,7 +22,78 @@ export function EditableSetRow({
   onChangeReps,
   showAddButton,
   onAdd,
+  showRemoveButton,
+  onRemove,
 }: Props) {
+  const { colors } = useTheme();
+
+  const styles = StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      gap: 10,
+      marginBottom: 14,
+    },
+    badge: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.surfaceAlt,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 4,
+    },
+    badgeText: {
+      color: colors.textSecondary,
+      fontWeight: '700',
+      fontSize: 13,
+    },
+    field: {
+      flex: 1,
+      gap: 6,
+    },
+    label: {
+      color: colors.textMuted,
+      fontSize: 12,
+    },
+    input: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: colors.textSecondary,
+      fontSize: 16,
+    },
+    addButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      paddingHorizontal: 18,
+      paddingVertical: 14,
+    },
+    addButtonText: {
+      color: '#04140D',
+      fontWeight: '700',
+      fontSize: 20,
+      lineHeight: 20,
+    },
+    removeButton: {
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      paddingHorizontal: 18,
+      paddingVertical: 14,
+    },
+    removeButtonText: {
+      color: colors.danger,
+      fontWeight: '700',
+      fontSize: 20,
+      lineHeight: 20,
+    },
+  });
+
   return (
     <View style={styles.row}>
       <View style={styles.badge}>
@@ -35,6 +108,7 @@ export function EditableSetRow({
           onChangeText={onChangeWeight}
           placeholder="0"
           placeholderTextColor={colors.textMuted}
+          selectTextOnFocus
         />
       </View>
       <View style={styles.field}>
@@ -46,65 +120,19 @@ export function EditableSetRow({
           onChangeText={onChangeReps}
           placeholder="0"
           placeholderTextColor={colors.textMuted}
+          selectTextOnFocus
         />
       </View>
+      {showRemoveButton && (
+        <Pressable style={styles.removeButton} onPress={onRemove} hitSlop={8}>
+          <Text style={styles.removeButtonText}>−</Text>
+        </Pressable>
+      )}
       {showAddButton && (
         <Pressable style={styles.addButton} onPress={onAdd} hitSlop={8}>
-          <Text style={styles.addButtonText}>OK</Text>
+          <Text style={styles.addButtonText}>+</Text>
         </Pressable>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 10,
-    marginBottom: 14,
-  },
-  badge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  badgeText: {
-    color: colors.textSecondary,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  field: {
-    flex: 1,
-    gap: 6,
-  },
-  label: {
-    color: colors.textMuted,
-    fontSize: 12,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: colors.textPrimary,
-    fontSize: 16,
-  },
-  addButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-  },
-  addButtonText: {
-    color: '#04140D',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-});

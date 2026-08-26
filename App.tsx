@@ -3,8 +3,21 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { AutoCompleteWatcher } from './src/components/AutoCompleteWatcher';
+import { WorkoutSessionProvider } from './src/context/WorkoutSessionContext';
 import { initDatabase } from './src/db/database';
 import { colors } from './src/theme/colors';
+import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
+
+function ThemedRoot() {
+  const { effectiveMode } = useTheme();
+  return (
+    <>
+      <AppNavigator />
+      <StatusBar style={effectiveMode === 'light' ? 'dark' : 'light'} />
+    </>
+  );
+}
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
@@ -37,8 +50,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AppNavigator />
-      <StatusBar style="light" />
+      <ThemeProvider>
+        <WorkoutSessionProvider>
+          <AutoCompleteWatcher />
+          <ThemedRoot />
+        </WorkoutSessionProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

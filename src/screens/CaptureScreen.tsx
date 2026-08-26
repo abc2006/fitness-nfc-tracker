@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -13,9 +13,10 @@ import {
 } from 'react-native';
 import { EditableRestRow } from '../components/EditableRestRow';
 import { EditableSetRow } from '../components/EditableSetRow';
-import { saveDevice } from '../db/database';
-import { colors } from '../theme/colors';
+import { getDeviceByTagId, getTrainingDefaults, saveDevice } from '../db/database';
+import { useTheme } from '../theme/ThemeContext';
 import { RootStackParamList } from '../types';
+import { showErrorAlert } from '../utils/errorAlert';
 import { generateId } from '../utils/uuid';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Capture'>;
@@ -26,16 +27,59 @@ interface DraftSet {
 }
 
 export default function CaptureScreen({ route, navigation }: Props) {
+  const { colors } = useTheme();
   const { tagId } = route.params;
   const [deviceName, setDeviceName] = useState('');
   const [notes, setNotes] = useState('');
   const [sets, setSets] = useState<DraftSet[]>([{ weight: '', reps: '' }]);
   const [rests, setRests] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [enabled, setEnabled] = useState(true);
+  const [defaultRestSeconds, setDefaultRestSeconds] = useState<number | null>(null);
+
+  useEffect(() => {
+    getDeviceByTagId(tagId)
+      .then((existing) => {
+        if (existing) {
+          navigation.setOptions({ title: 'Gerät bearbeiten' });
+          setDeviceName(existing.deviceName);
+          setNotes(existing.notes);
+          setEnabled(existing.enabled);
+          setSets(existing.sets.map((s) => ({ weight: String(s.weight), reps: String(s.reps) })));
+          setRests(
+            existing.sets.slice(0, -1).map((s) => (s.restTimeSeconds != null ? String(s.restTimeSeconds) : ''))
+          );
+          return;
+        }
+
+        getTrainingDefaults()
+          .then((defaults) => {
+            setDefaultRestSeconds(defaults.defaultRestSeconds);
+            if (defaults.defaultReps != null) {
+              setSets((prev) =>
+                prev.map((s) => (s.reps === '' ? { ...s, reps: String(defaults.defaultReps) } : s))
+              );
+            }
+          })
+          .catch((error) => console.warn('Failed to load training defaults', error));
+      })
+      .catch((error) => console.warn('Failed to load device for editing', error));
+  }, [tagId, navigation]);
 
   const addNextSet = () => {
-    setRests((prev) => [...prev, '']);
-    setSets((prev) => [...prev, { weight: '', reps: '' }]);
+    setRests((prev) => [
+      ...prev,
+      prev.length > 0 ? prev[prev.length - 1] : defaultRestSeconds != null ? String(defaultRestSeconds) : '',
+    ]);
+    setSets((prev) => {
+      const last = prev[prev.length - 1];
+      return [...prev, { weight: last.weight, reps: last.reps }];
+    });
+  };
+
+  const removeLastSet = () => {
+    setSets((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
+    setRests((prev) => prev.slice(0, -1));
   };
 
   const updateSet = (index: number, field: 'weight' | 'reps', value: string) => {
@@ -77,24 +121,94 @@ export default function CaptureScreen({ route, navigation }: Props) {
         tagId,
         deviceName: deviceName.trim(),
         notes: notes.trim(),
+        enabled,
         sets: parsedSets,
       });
       navigation.goBack();
     } catch (error) {
       console.warn('Failed to save device', error);
-      Alert.alert('Fehler', 'Das Gerät konnte nicht gespeichert werden.');
+      showErrorAlert('Fehler beim Speichern', String(error));
     } finally {
       setSaving(false);
     }
   };
+
+  const styles = StyleSheet.create({
+    flex: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    container: {
+      padding: 20,
+      paddingBottom: 60,
+    },
+    title: {
+      color: colors.textPrimary,
+      fontSize: 24,
+      fontWeight: '700',
+    },
+    tagId: {
+      color: colors.textMuted,
+      fontSize: 12,
+      marginTop: 4,
+      marginBottom: 24,
+    },
+    field: {
+      marginBottom: 20,
+      gap: 8,
+    },
+    label: {
+      color: colors.textSecondary,
+      fontSize: 14,
+    },
+    input: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      color: colors.textPrimary,
+      fontSize: 16,
+    },
+    notesInput: {
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
+    sectionTitle: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 14,
+    },
+    saveButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 16,
+      paddingVertical: 18,
+      alignItems: 'center',
+      marginTop: 12,
+    },
+    saveButtonDisabled: {
+      opacity: 0.6,
+    },
+    saveButtonText: {
+      color: '#04140D',
+      fontWeight: '700',
+      fontSize: 17,
+    },
+  });
 
   return (
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Neues Gerät</Text>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         <Text style={styles.tagId}>Tag-ID: {tagId}</Text>
 
         <View style={styles.field}>
@@ -131,6 +245,8 @@ export default function CaptureScreen({ route, navigation }: Props) {
               onChangeReps={(v) => updateSet(index, 'reps', v)}
               showAddButton={index === sets.length - 1}
               onAdd={addNextSet}
+              showRemoveButton={index === sets.length - 1 && sets.length > 1}
+              onRemove={removeLastSet}
             />
             {index < rests.length && (
               <EditableRestRow restTimeSeconds={rests[index]} onChange={(v) => updateRest(index, v)} />
@@ -149,69 +265,3 @@ export default function CaptureScreen({ route, navigation }: Props) {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 60,
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  tagId: {
-    color: colors.textMuted,
-    fontSize: 12,
-    marginTop: 4,
-    marginBottom: 24,
-  },
-  field: {
-    marginBottom: 20,
-    gap: 8,
-  },
-  label: {
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: colors.textPrimary,
-    fontSize: 16,
-  },
-  notesInput: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  sectionTitle: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 14,
-  },
-  saveButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    color: '#04140D',
-    fontWeight: '700',
-    fontSize: 17,
-  },
-});
